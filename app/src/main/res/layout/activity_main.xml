@@ -2,19 +2,35 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:mapbox="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    xmlns:mapbox="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <Button
+        android:id="@+id/start_button"
+        android:layout_width="230dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginStart="24dp"
+        android:background="@color/colorAccent"
+        android:enabled="false"
+        android:text="@string/start_navigating"
+        android:textColor="@color/colorPrimary"
+        mapbox:layout_constraintBottom_toBottomOf="@+id/mapView"
+        mapbox:layout_constraintEnd_toEndOf="parent"
+        mapbox:layout_constraintStart_toStartOf="parent" />
+
     <com.mapbox.mapboxsdk.maps.MapView
         android:id="@+id/mapView"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="match_parent"
         mapbox:mapbox_cameraTargetLat="40.73581"
         mapbox:mapbox_cameraTargetLng="-73.99155"
-        mapbox:mapbox_styleUrl="mapbox://styles/wanjing/cjneooqg43dpg2rsfe9sk4ffi"
-        mapbox:mapbox_cameraZoom="11" />
+        mapbox:mapbox_cameraZoom="11"
+        mapbox:mapbox_styleUrl="mapbox://styles/wanjing/cjneooqg43dpg2rsfe9sk4ffi">
+
+    </com.mapbox.mapboxsdk.maps.MapView>
 
 
     <!--<TextView-->
