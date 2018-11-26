@@ -1,6 +1,7 @@
 package com.example.wanjing.coinz
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import com.mapbox.android.core.permissions.PermissionsManager
@@ -8,7 +9,10 @@ import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import android.location.Location
+import android.os.AsyncTask
+import android.util.Log
 import android.widget.Button
+import com.example.wanjing.coinz.DownloadCompleteRunner.result
 import com.mapbox.android.core.location.LocationEngine
 import com.mapbox.android.core.location.LocationEngineListener
 import com.mapbox.android.core.location.LocationEnginePriority
@@ -29,12 +33,20 @@ import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.location.modes.CameraMode
 import com.mapbox.mapboxsdk.location.modes.RenderMode
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
+import java.io.IOException
+import java.io.InputStream
+import java.net.HttpURLConnection
+import java.net.URL
 
 
 class MainActivity : AppCompatActivity(), PermissionsListener, LocationEngineListener, MapboxMap.OnMapClickListener {
 
 
     private val tag = "MainActivity"
+
+    private var downloadDate = "" // Format: YYYY/MM/DD
+    private val preferencesFile = "MyPrefsFile" // for storing preferences
+
     private lateinit var mapView: MapView
     private lateinit var map: MapboxMap
     private lateinit var start_button: Button
@@ -46,6 +58,7 @@ class MainActivity : AppCompatActivity(), PermissionsListener, LocationEngineLis
     private var locationEngine: LocationEngine? = null
     private var locationLayerPlugin: LocationLayerPlugin? = null
     private var destinationMarker: Marker? = null
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -147,6 +160,9 @@ class MainActivity : AppCompatActivity(), PermissionsListener, LocationEngineLis
 
     public override fun onStart() {
         super.onStart()
+        val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
+        downloadDate = settings.getString("lastDownloadDate", "")
+        Log.d(tag, "[onStart] Recalled lastDownloadDate is ’$downloadDate’")
         mapView.onStart()
     }
 
@@ -162,6 +178,11 @@ class MainActivity : AppCompatActivity(), PermissionsListener, LocationEngineLis
 
     public override fun onStop() {
         super.onStop()
+        Log.d(tag, "[onStop] Storing lastDownloadDate of $downloadDate")
+        val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
+        val editor = settings.edit()
+        editor.putString("lastDownloadDate", downloadDate)
+        editor.apply()
         mapView.onStop()
     }
 
@@ -180,4 +201,43 @@ class MainActivity : AppCompatActivity(), PermissionsListener, LocationEngineLis
         mapView.onSaveInstanceState(outState)
     }
 
+}
+
+interface DownloadCompleteListener {
+    fun downloadComplete(result: String)
+}
+object DownloadCompleteRunner : DownloadCompleteListener {
+    var result : String? = null
+    override fun downloadComplete(result: String) {
+        this.result = result }
+}
+
+class DownloadFileTask(private val caller : DownloadCompleteListener) :
+        AsyncTask<String, Void, String>() {
+    override fun doInBackground(vararg urls: String): String = try {
+        this!!.loadFileFromNetwork(urls[0])!!
+    } catch (e: IOException) {
+        "Unable to load content. Check your network connection"
+    }
+    private fun loadFileFromNetwork(urlString: String): String? {
+        val stream : InputStream = downloadUrl(urlString)
+        return result
+    }
+
+    @Throws(IOException::class)
+    private fun downloadUrl(urlString: String): InputStream {
+        val url = URL(urlString)
+        val conn = url.openConnection() as HttpURLConnection
+        conn.readTimeout = 10000 // milliseconds
+        conn.connectTimeout = 15000 // milliseconds
+        conn.requestMethod = "GET"
+        conn.doInput = true
+        conn.connect() // Starts the query
+        return conn.inputStream
+    }
+
+    override fun onPostExecute(result: String) {
+        super.onPostExecute(result)
+        caller.downloadComplete(result)
+    }
 }
