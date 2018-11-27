@@ -32,6 +32,7 @@ import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.location.modes.CameraMode
 import com.mapbox.mapboxsdk.location.modes.RenderMode
+import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import java.io.IOException
 import java.io.InputStream
@@ -39,7 +40,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 
-class MainActivity : AppCompatActivity(), PermissionsListener, LocationEngineListener, MapboxMap.OnMapClickListener {
+
+class MainActivity : AppCompatActivity(), OnMapReadyCallback,PermissionsListener, LocationEngineListener {
 
 
     private val tag = "MainActivity"
@@ -47,17 +49,18 @@ class MainActivity : AppCompatActivity(), PermissionsListener, LocationEngineLis
     private var downloadDate = "" // Format: YYYY/MM/DD
     private val preferencesFile = "MyPrefsFile" // for storing preferences
 
-    private lateinit var mapView: MapView
-    private lateinit var map: MapboxMap
+    private var mapView: MapView? = null
+    private  var map: MapboxMap? = null
+
     private lateinit var start_button: Button
     private lateinit var permissionManager: PermissionsManager
     private lateinit var originLocation: Location
     private lateinit var originPosition: Point
     private lateinit var destinationPosition: Point
 
-    private var locationEngine: LocationEngine? = null
-    private var locationLayerPlugin: LocationLayerPlugin? = null
-    private var destinationMarker: Marker? = null
+    private lateinit var locationEngine: LocationEngine
+    private lateinit var locationLayerPlugin: LocationLayerPlugin
+    private lateinit var destinationMarker: Marker
 
 
 
@@ -65,80 +68,91 @@ class MainActivity : AppCompatActivity(), PermissionsListener, LocationEngineLis
         super.onCreate(savedInstanceState)
         Mapbox.getInstance(this, "pk.eyJ1Ijoid2FuamluZyIsImEiOiJjam14aHFzaXYwZGxmM3B0Y2xiMTV5ZDN3In0.mWGG-pa6gzJEisINLaDLRA");
         setContentView(R.layout.activity_main)
-        mapView = findViewById(R.id.mapView);
+        mapView = findViewById(R.id.mapboxMapView);
         start_button = findViewById(R.id.start_button)
-        mapView?.onCreate(savedInstanceState);
-        mapView.getMapAsync { mapboxMap ->
-            map = mapboxMap
-            enableLocation()
-        }
-
+        mapView?.onCreate(savedInstanceState)
+        mapView?.getMapAsync (this)
         start_button.setOnClickListener{
 
         }
     }
 
+    override fun onMapReady(mapboxMap: MapboxMap?) {
+        if (mapboxMap == null) {
+            Log.d(tag,"[onMapReady] mapboxMap is null") }
+        else {
+            map = mapboxMap
+            map?.uiSettings?.isCompassEnabled = true
+            map?.uiSettings?.isZoomControlsEnabled = true
+            enableLocation()
+        }
+    }
+
     private fun enableLocation() {
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
-            initializeLocationEngine()
-            initializeLocationLayer()
-
+            Log.d(tag, "Permissions are granted")
+            initialiseLocationEngine()
+            initialiseLocationLayer()
         } else {
-            permissionManager = PermissionsManager(this)
-            permissionManager.requestLocationPermissions(this)
-
+            Log.d(tag, "Permissions are not granted")
+            var permissionsManager = PermissionsManager(this)
+            permissionsManager.requestLocationPermissions(this)
         }
 
     }
 
     @SuppressWarnings("MissingPermission")
-    private fun initializeLocationEngine() {
-        locationEngine = LocationEngineProvider(this).obtainBestLocationEngineAvailable()
-        locationEngine?.priority = LocationEnginePriority.HIGH_ACCURACY
-        locationEngine?.activate()
-
-        val lastLocation = locationEngine?.lastLocation
+    private fun initialiseLocationEngine() {
+        locationEngine = LocationEngineProvider(this)
+                .obtainBestLocationEngineAvailable()
+        locationEngine.apply {
+            interval = 5000 // preferably every 5 seconds
+            fastestInterval = 1000 // at most every second
+            priority = LocationEnginePriority.HIGH_ACCURACY
+            activate()
+        }
+        val lastLocation = locationEngine.lastLocation
         if (lastLocation != null) {
             originLocation = lastLocation
             setCameraPosition(lastLocation)
         } else {
-            locationEngine?.addLocationEngineListener(this)
+            locationEngine.addLocationEngineListener(this)
         }
     }
 
-    private fun initializeLocationLayer() {
-        locationLayerPlugin = LocationLayerPlugin(mapView, map, locationEngine)
-        locationLayerPlugin?.isLocationLayerEnabled = true
-        locationLayerPlugin?.cameraMode = CameraMode.TRACKING
-        locationLayerPlugin?.renderMode = RenderMode.NORMAL
-
+    @SuppressWarnings("MissingPermission")
+    private fun initialiseLocationLayer() {
+        if (mapView == null) { Log.d(tag, "mapView is null") }
+        else {
+            if (map == null) { Log.d(tag, "map is null") }
+            else {
+                locationLayerPlugin = LocationLayerPlugin(mapView!!, map!!, locationEngine)
+                locationLayerPlugin.apply {
+                    setLocationLayerEnabled(true)
+                    cameraMode = CameraMode.TRACKING
+                    renderMode = RenderMode.NORMAL
+                }
+            }
+        }
     }
 
     private fun setCameraPosition(location: Location) {
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                LatLng(location.latitude, location.longitude), 13.0))
-
+        val latlng = LatLng(location.latitude, location.longitude)
+        map?.animateCamera(CameraUpdateFactory.newLatLng(latlng))
     }
 
-    @SuppressLint("ResourceAsColor")
-    override fun onMapClick(point: LatLng) {
-        destinationMarker = map.addMarker(MarkerOptions().position(point))
-        destinationPosition = Point.fromLngLat(point.longitude,point.latitude)
-        originPosition = Point.fromLngLat(originLocation.longitude,originLocation.latitude)
-
-
-        start_button.isEnabled = true
-        start_button.setBackgroundColor(R.color.mapbox_blue)
-    }
 
     override fun onExplanationNeeded(permissionsToExplain: MutableList<String>?) {
-        // present a toast or a dialog to give reasons why they need to grant access
-        TODO("not implemented")
+        Log.d(tag, "Permissions: $permissionsToExplain")
+// Present popup message or dialog
     }
 
     override fun onPermissionResult(granted: Boolean) {
-        if(granted) {
+        Log.d(tag, "[onPermissionResult] granted == $granted")
+        if (granted) {
             enableLocation()
+        } else {
+// Open a dialogue with the user
         }
     }
 
@@ -147,33 +161,33 @@ class MainActivity : AppCompatActivity(), PermissionsListener, LocationEngineLis
     }
 
     override fun onLocationChanged(location: Location?) {
-        location?.let {
+        if (location == null) {
+            Log.d(tag, "[onLocationChanged] location is null") }
+        else {
             originLocation = location
-            setCameraPosition(location)
+            setCameraPosition(originLocation)
         }
     }
 
     @SuppressWarnings("MissingPermission")
     override fun onConnected() {
-        locationEngine?.requestLocationUpdates()
+        Log.d(tag, "[onConnected] requesting location updates")
+        locationEngine.requestLocationUpdates()
     }
 
     public override fun onStart() {
         super.onStart()
-        val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
-        downloadDate = settings.getString("lastDownloadDate", "")
-        Log.d(tag, "[onStart] Recalled lastDownloadDate is ’$downloadDate’")
-        mapView.onStart()
+        mapView?.onStart()
     }
 
     public override fun onResume() {
         super.onResume()
-        mapView.onResume()
+        mapView?.onResume()
     }
 
     public override fun onPause() {
         super.onPause()
-        mapView.onPause()
+        mapView?.onPause()
     }
 
     public override fun onStop() {
@@ -183,22 +197,22 @@ class MainActivity : AppCompatActivity(), PermissionsListener, LocationEngineLis
         val editor = settings.edit()
         editor.putString("lastDownloadDate", downloadDate)
         editor.apply()
-        mapView.onStop()
+        mapView?.onStop()
     }
 
     override fun onLowMemory() {
         super.onLowMemory()
-        mapView.onLowMemory()
+        mapView?.onLowMemory()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        mapView.onDestroy()
+        mapView?.onDestroy()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        mapView.onSaveInstanceState(outState)
+        mapView?.onSaveInstanceState(outState)
     }
 
 }
