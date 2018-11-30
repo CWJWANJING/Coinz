@@ -12,33 +12,72 @@ import android.location.Location
 import android.os.AsyncTask
 import android.util.Log
 import android.widget.Button
+import com.example.wanjing.coinz.DownloadCompleteRunner.downloadComplete
 import com.example.wanjing.coinz.DownloadCompleteRunner.result
 import com.mapbox.android.core.location.LocationEngine
 import com.mapbox.android.core.location.LocationEngineListener
 import com.mapbox.android.core.location.LocationEnginePriority
 import com.mapbox.android.core.location.LocationEngineProvider
 import com.mapbox.android.core.permissions.PermissionsListener
-import com.mapbox.geojson.Point
-import com.mapbox.geojson.Feature
-import com.mapbox.geojson.FeatureCollection
-import com.mapbox.geojson.Geometry
 import com.google.gson.JsonObject
+import com.mapbox.geojson.*
+import com.mapbox.mapboxsdk.annotations.*
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
-import com.mapbox.mapboxsdk.annotations.Icon
-import com.mapbox.mapboxsdk.annotations.IconFactory
-import com.mapbox.mapboxsdk.annotations.Marker
-import com.mapbox.mapboxsdk.annotations.MarkerOptions
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.geometry.LatLng
+import com.mapbox.mapboxsdk.location.LocationComponent
 import com.mapbox.mapboxsdk.location.modes.CameraMode
 import com.mapbox.mapboxsdk.location.modes.RenderMode
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
+import com.mapbox.mapboxsdk.style.layers.LineLayer
+import com.mapbox.mapboxsdk.style.light.Position
+import com.mapbox.services.android.navigation.v5.navigation.MapboxNavigation
+import kotlinx.android.synthetic.main.activity_main.*
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.*
 
+interface DownloadCompleteListener {
+    fun downloadComplete(result: String)
+}
+object DownloadCompleteRunner : DownloadCompleteListener {
+    var result : String? = null
+    override fun downloadComplete(result: String) {
+        this.result = result }
+}
+
+class DownloadFileTask(private val caller : DownloadCompleteListener) :
+        AsyncTask<String, Void, String>() {
+    override fun doInBackground(vararg urls: String): String = try {
+        this!!.loadFileFromNetwork(urls[0])!!
+    } catch (e: IOException) {
+        "Unable to load content. Check your network connection"
+    }
+    private fun loadFileFromNetwork(urlString: String): String? {
+        val stream : InputStream = downloadUrl(urlString)
+        return result
+    }
+
+    @Throws(IOException::class)
+    private fun downloadUrl(urlString: String): InputStream {
+        val url = URL(urlString)
+        val conn = url.openConnection() as HttpURLConnection
+        conn.readTimeout = 10000 // milliseconds
+        conn.connectTimeout = 15000 // milliseconds
+        conn.requestMethod = "GET"
+        conn.doInput = true
+        conn.connect() // Starts the query
+        return conn.inputStream
+    }
+
+    override fun onPostExecute(result: String) {
+        super.onPostExecute(result)
+        caller.downloadComplete(result)
+    }
+}
 
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback,PermissionsListener, LocationEngineListener {
@@ -46,14 +85,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback,PermissionsListener
 
     private val tag = "MainActivity"
 
-    private var downloadDate = "" // Format: YYYY/MM/DD
+    private val year: String  = Date().year.toString()
+    private val month: String = Date().month.toString()
+    private val day: String = Date().day.toString()
+    private var downloadDate = "$year/$month/$day" // Format: YYYY/MM/DD
     private val preferencesFile = "MyPrefsFile" // for storing preferences
 
     private var mapView: MapView? = null
     private  var map: MapboxMap? = null
 
     private lateinit var start_button: Button
-    private lateinit var permissionManager: PermissionsManager
+    private lateinit var permissionsManager: PermissionsManager
     private lateinit var originLocation: Location
     private lateinit var originPosition: Point
     private lateinit var destinationPosition: Point
@@ -61,13 +103,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback,PermissionsListener
     private lateinit var locationEngine: LocationEngine
     private lateinit var locationLayerPlugin: LocationLayerPlugin
     private lateinit var destinationMarker: Marker
+    private lateinit var LocationComponent: LocationComponent
 
+
+    private val geoJsonString:String = "http://homepages.inf.ed.ac.uk/stg/coinz/$downloadDate/coinzmap.geojson"
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Mapbox.getInstance(this, "pk.eyJ1Ijoid2FuamluZyIsImEiOiJjam14aHFzaXYwZGxmM3B0Y2xiMTV5ZDN3In0.mWGG-pa6gzJEisINLaDLRA");
         setContentView(R.layout.activity_main)
+//        val navigation = MapboxNavigation(this,"pk.eyJ1Ijoid2FuamluZyIsImEiOiJjam14aHFzaXYwZGxmM3B0Y2xiMTV5ZDN3In0.mWGG-pa6gzJEisINLaDLRA"
+        Mapbox.getInstance(this, "pk.eyJ1Ijoid2FuamluZyIsImEiOiJjam14aHFzaXYwZGxmM3B0Y2xiMTV5ZDN3In0.mWGG-pa6gzJEisINLaDLRA");
+
         mapView = findViewById(R.id.mapboxMapView);
         start_button = findViewById(R.id.start_button)
         mapView?.onCreate(savedInstanceState)
@@ -75,16 +122,45 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback,PermissionsListener
         start_button.setOnClickListener{
 
         }
+
+        DownloadFileTask(DownloadCompleteRunner).execute("http://homepages.inf.ed.ac.uk/stg/coinz/$downloadDate/coinzmap.geojson")
+        Log.d(tag, "geojson file is downloaded")
+
     }
+
+
 
     override fun onMapReady(mapboxMap: MapboxMap?) {
         if (mapboxMap == null) {
             Log.d(tag,"[onMapReady] mapboxMap is null") }
         else {
+
             map = mapboxMap
             map?.uiSettings?.isCompassEnabled = true
             map?.uiSettings?.isZoomControlsEnabled = true
             enableLocation()
+
+
+            val geoJsonString = DownloadCompleteRunner.result.toString()
+            val geoJsonUrl = URL("http://homepages.inf.ed.ac.uk/stg/coinz/$year/$month/$day/coinzmap.geojson")
+            val geoJsonSourcepre = GeoJsonSource("geojson-source", geoJsonUrl)
+            mapboxMap.addSource(geoJsonSourcepre)
+            mapboxMap.addLayer( LineLayer("geojson", "geojson"))
+
+            Log.d(tag, "geojson layer added")
+            val fc = FeatureCollection.fromJson(geoJsonString)
+            val features: List<Feature> = fc.features()!!
+
+            for (f in features.orEmpty()) {
+                if (f.geometry() is Point) {
+                    val coordinates: Location? = f.geometry() as Location?
+                    map?.addMarker(
+                         MarkerViewOptions().position(LatLng(coordinates!!.latitude, coordinates!!.longitude))
+                    )
+                }
+            }
+
+
         }
     }
 
@@ -95,7 +171,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback,PermissionsListener
             initialiseLocationLayer()
         } else {
             Log.d(tag, "Permissions are not granted")
-            var permissionsManager = PermissionsManager(this)
+            permissionsManager = PermissionsManager(this)
             permissionsManager.requestLocationPermissions(this)
         }
 
@@ -157,7 +233,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback,PermissionsListener
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        permissionManager.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        permissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
     override fun onLocationChanged(location: Location?) {
@@ -177,6 +253,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback,PermissionsListener
 
     public override fun onStart() {
         super.onStart()
+        // Restore preferences
+        val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
+        // use ”” as the default value (this might be the first time the app is run)
+        downloadDate = settings.getString("lastDownloadDate", "")
+        // Write a message to ”logcat” (for debugging purposes)
+        Log.d(tag, "[onStart] Recalled lastDownloadDate is ’$downloadDate’")
         mapView?.onStart()
     }
 
@@ -217,41 +299,3 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback,PermissionsListener
 
 }
 
-interface DownloadCompleteListener {
-    fun downloadComplete(result: String)
-}
-object DownloadCompleteRunner : DownloadCompleteListener {
-    var result : String? = null
-    override fun downloadComplete(result: String) {
-        this.result = result }
-}
-
-class DownloadFileTask(private val caller : DownloadCompleteListener) :
-        AsyncTask<String, Void, String>() {
-    override fun doInBackground(vararg urls: String): String = try {
-        this!!.loadFileFromNetwork(urls[0])!!
-    } catch (e: IOException) {
-        "Unable to load content. Check your network connection"
-    }
-    private fun loadFileFromNetwork(urlString: String): String? {
-        val stream : InputStream = downloadUrl(urlString)
-        return result
-    }
-
-    @Throws(IOException::class)
-    private fun downloadUrl(urlString: String): InputStream {
-        val url = URL(urlString)
-        val conn = url.openConnection() as HttpURLConnection
-        conn.readTimeout = 10000 // milliseconds
-        conn.connectTimeout = 15000 // milliseconds
-        conn.requestMethod = "GET"
-        conn.doInput = true
-        conn.connect() // Starts the query
-        return conn.inputStream
-    }
-
-    override fun onPostExecute(result: String) {
-        super.onPostExecute(result)
-        caller.downloadComplete(result)
-    }
-}
