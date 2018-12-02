@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "456230617532",
+    "firebase_url": "https://communicaz-ed21b.firebaseio.com",
+    "project_id": "communicaz-ed21b",
+    "storage_bucket": "communicaz-ed21b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:456230617532:android:8f362c20f672bda4",
+        "android_client_info": {
+          "package_name": "com.example.wanjing.coinz"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "456230617532-r7rdq8eqk1esioar1ufogd8bik54vm37.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.wanjing.coinz",
+            "certificate_hash": "95f75b78f97f88b59fae1fd1038bc5437dcf5193"
+          }
+        },
+        {
+          "client_id": "456230617532-qdtfcj7cepbp9n45dds25puog64d5vg8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD62zc0qp3r4h7ER_OqbYNuSyFDCfPvTxc"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "456230617532-qdtfcj7cepbp9n45dds25puog64d5vg8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
