@@ -10,11 +10,13 @@ import android.location.Location;
 
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.View;
 
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -91,13 +93,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private final String preferencesFile = "MyPrefsFile"; // for storing preferences
 
-    private FirebaseAuth mAuth;
     private static final String TAG = "MainActivity";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         Mapbox.getInstance(this, "pk.eyJ1Ijoid2FuamluZyIsImEiOiJjam14aHFzaXYwZGxmM3B0Y2xiMTV5ZDN3In0.mWGG-pa6gzJEisINLaDLRA");
@@ -105,7 +109,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
 
-        mAuth = FirebaseAuth.getInstance();
+
+
 
     }
 
@@ -444,6 +449,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             DownloadCompleteRunner.downloadComplete(result);
         }
     }
+
+
+    public void Communicaz(View view){
+        Intent startNewActivity = new Intent(this,Communicaz_Activity.class);
+        startActivity(startNewActivity);
+    }
+
+    public void Setting(View view){
+        Intent startNewActivity = new Intent(this,Setting.class);
+        startActivity(startNewActivity);
+    }
+
 }
 
 
