@@ -4,7 +4,7 @@
 
     <!-- Strings related to Home -->
     <string name="Button_enter">Enter</string>
-    <string name="welcome_word">Welcome to \n Coinz \n (๑•̀ㅂ•́)و✧</string>
+    <string name="welcome_word">Welcome to Coinz </string>
 
 
     <string name="title_activity_login">Sign in</string>

@@ -17,4 +17,9 @@ public class Setting extends AppCompatActivity {
         Intent startNewActivity = new Intent(this,firebaseLogin.class);
         startActivity(startNewActivity);
     }
+
+    public void Register(View view){
+        Intent startNewActivity = new Intent(this,Register.class);
+        startActivity(startNewActivity);
+    }
 }

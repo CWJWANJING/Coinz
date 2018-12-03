@@ -1,5 +1,6 @@
 package com.example.wanjing.coinz;
 
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -93,5 +94,15 @@ public class firebaseLogin extends AppCompatActivity {
         if (mAuthListener != null) {
             mAuth.removeAuthStateListener(mAuthListener);
         }
+    }
+
+    public void Setting(View view){
+        Intent startNewActivity = new Intent(this,Setting.class);
+        startActivity(startNewActivity);
+    }
+
+    public void MainActivity(View view){
+        Intent startNewActivity = new Intent(this,MainActivity.class);
+        startActivity(startNewActivity);
     }
 }
