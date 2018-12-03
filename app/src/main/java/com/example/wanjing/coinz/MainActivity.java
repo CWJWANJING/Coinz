@@ -93,7 +93,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private final String preferencesFile = "MyPrefsFile"; // for storing preferences
 
-    private static final String TAG = "MainActivity";
 
 
     @Override
@@ -137,8 +136,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             Log.d(tag,"geojson file start downloading.");
 
-
-            Log.d(tag,"gwojson string got");
             try {
                 URL geoJsonUrl = new URL("http://homepages.inf.ed.ac.uk/stg/coinz/" + downloadDate + "/coinzmap.geojson");
 
@@ -350,65 +347,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             locationEngine.removeLocationEngineListener(this);
             locationEngine.removeLocationUpdates();
         }
-    }
-
-    public void sendSignInLink(String email, ActionCodeSettings actionCodeSettings) {
-
-        FirebaseAuth auth = FirebaseAuth.getInstance();
-        auth.sendSignInLinkToEmail(email, actionCodeSettings)
-                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if (task.isSuccessful()) {
-                            Log.d(TAG, "Email sent.");
-                        }
-                    }
-                });
-    }
-
-
-    public void buildActionCodeSettings() {
-
-        ActionCodeSettings actionCodeSettings =
-                ActionCodeSettings.newBuilder()
-                        // URL you want to redirect back to. The domain (www.example.com) for this
-                        // URL must be whitelisted in the Firebase Console.
-                        .setUrl("https://www.example.com/finishSignUp?cartId=1234")
-                        // This must be true
-                        .setHandleCodeInApp(true)
-                        .setIOSBundleId("com.example.ios")
-                        .setAndroidPackageName(
-                                "com.example.android",
-                                true, /* installIfNotAvailable */
-                                "12"    /* minimumVersion */)
-                        .build();
-    }
-
-
-    public void differentiateLink(String email) {
-        FirebaseAuth auth = FirebaseAuth.getInstance();
-
-        auth.fetchSignInMethodsForEmail(email)
-                .addOnCompleteListener(new OnCompleteListener<SignInMethodQueryResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<SignInMethodQueryResult> task) {
-                        if (task.isSuccessful()) {
-                            SignInMethodQueryResult result = task.getResult();
-                            List<String> signInMethods = result.getSignInMethods();
-                            if (signInMethods.contains(EmailAuthProvider.EMAIL_PASSWORD_SIGN_IN_METHOD)) {
-                                // User can sign in with email/password
-                            } else if (signInMethods.contains(EmailAuthProvider.EMAIL_LINK_SIGN_IN_METHOD)) {
-                                // User can sign in with email/link
-                            }
-                        } else {
-                            Log.e(TAG, "Error getting sign in methods for user", task.getException());
-                        }
-                    }
-                });
-    }
-
-    public void signOut() {
-        FirebaseAuth.getInstance().signOut();
     }
 
 
