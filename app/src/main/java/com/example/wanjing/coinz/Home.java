@@ -17,8 +17,8 @@ public class Home extends AppCompatActivity {
 
     }
 
-    public void MainActivity(View view){
-        Intent startNewActivity = new Intent(this,MainActivity.class);
+    public void Setting(View view){
+        Intent startNewActivity = new Intent(this,Setting.class);
         startActivity(startNewActivity);
     }
 }

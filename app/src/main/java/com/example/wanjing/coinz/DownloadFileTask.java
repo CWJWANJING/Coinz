@@ -38,18 +38,7 @@ public class DownloadFileTask extends AsyncTask<String, Void, String> {
     private String readStream(InputStream stream)
             throws IOException {
         // Read input from stream, build result as a string
-        return null;
-    }
-
-    @Override
-    protected void onPostExecute(String result) {
-        super.onPostExecute(result);
-        DownloadCompleteRunner.downloadComplete(result);
-    }
-
-    private static String convertStreamToString(InputStream is) throws Exception {
-
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
 
         StringBuilder sb = new StringBuilder();
         String line = null;
@@ -58,5 +47,12 @@ public class DownloadFileTask extends AsyncTask<String, Void, String> {
         }
         reader.close();
         return sb.toString();
+    }
+
+
+    @Override
+    protected void onPostExecute(String result) {
+        super.onPostExecute(result);
+        DownloadCompleteRunner.downloadComplete(result);
     }
 }

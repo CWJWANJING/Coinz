@@ -75,13 +75,13 @@
     <Button
         android:id="@+id/backToGame"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="29dp"
         android:layout_marginBottom="16dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:background="#7fcae5"
-        android:text="Back to Game"
         android:onClick="MainActivity"
+        android:text="Play Game"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.028"
@@ -90,16 +90,29 @@
     <Button
         android:id="@+id/backToSetting"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="29dp"
         android:layout_marginBottom="16dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:background="#6fccee"
-        android:text="Back to Setting"
         android:onClick="Setting"
+        android:text="Back to Setting"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.951"
         app:layout_constraintStart_toEndOf="@+id/backToGame" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="126dp"
+        android:layout_height="29dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:text="Already signed in?"
+        app:layout_constraintBottom_toTopOf="@+id/backToGame"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.054"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </android.support.constraint.ConstraintLayout>

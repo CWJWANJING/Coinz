@@ -35,8 +35,9 @@ public class Register extends AppCompatActivity {
         mContext = Register.this;
         fm = new firebaseMethods(mContext);
         initWidget();
-        setupFirebaseAuth();
         init();
+        setupFirebaseAuth();
+
     }
 
     private void init(){

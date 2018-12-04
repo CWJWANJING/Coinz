@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.icu.text.SimpleDateFormat;
 import android.icu.util.Calendar;
 import android.location.Location;
@@ -19,6 +21,7 @@ import android.util.Log;
 import android.view.View;
 
 
+import com.google.android.gms.common.util.IOUtils;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.ActionCodeSettings;
@@ -43,6 +46,7 @@ import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.location.modes.CameraMode;
 import com.mapbox.mapboxsdk.location.modes.RenderMode;
 import com.mapbox.mapboxsdk.maps.MapView;
@@ -51,13 +55,18 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin;
 import com.mapbox.mapboxsdk.style.layers.LineLayer;
 
+
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
+import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.light.Position;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
+import com.mapbox.mapboxsdk.style.sources.Source;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 
@@ -68,8 +77,11 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import timber.log.Timber;
+
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
 
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, LocationEngineListener, PermissionsListener {
@@ -86,13 +98,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     Date c = Calendar.getInstance().getTime();
 
     SimpleDateFormat df = new SimpleDateFormat("yyyy/MM/dd");
-    private String downloadDate = df.format(c);
-
-
-  //  private String downloadDate = dtf.format(now).toString();// Format: YYYY/MM/DD
+    private String currentDate = df.format(c);
+    private String downloadDate = "";
 
     private final String preferencesFile = "MyPrefsFile"; // for storing preferences
-
 
 
     @Override
@@ -109,11 +118,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapView.getMapAsync(this);
 
 
-
-
     }
-
-
 
 
     @Override
@@ -131,100 +136,55 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 // Make location information available
             enableLocation();
 
-            String url =  "http://homepages.inf.ed.ac.uk/stg/coinz/" + downloadDate + "/coinzmap.geojson";
-            new DownloadFileTask().execute(url);
 
-            Log.d(tag,"geojson file start downloading.");
+            Log.d(tag, "geojson file start downloading.");
 
             try {
-                URL geoJsonUrl = new URL("http://homepages.inf.ed.ac.uk/stg/coinz/" + downloadDate + "/coinzmap.geojson");
 
-                GeoJsonSource geoJsonSource = new GeoJsonSource("geojson-source", geoJsonUrl);
-                mapboxMap.addSource(geoJsonSource);
+                String url = "http://homepages.inf.ed.ac.uk/stg/coinz/" + currentDate + "/coinzmap.geojson";
+                DownloadFileTask dlf = new DownloadFileTask();
+                String result = dlf.execute(url).get();
 
-                Log.d(tag,"source added");
-                FeatureCollection featureCollection = FeatureCollection.fromJson(url);
+                GeoJsonSource source = new GeoJsonSource("geojson", result);
+                mapboxMap.addSource(source);
+                LineLayer lineLayer = new LineLayer("geojson", "geojson");
+                lineLayer.setProperties();
+                mapboxMap.addLayer(lineLayer);
 
+                FeatureCollection featureCollection = FeatureCollection.fromJson(result);
                 List<Feature> features = featureCollection.features();
-
-                Log.d(tag,"feature collection got");
 
                 for (Feature f : features) {
                     if (f.geometry() instanceof Point) {
-                        Location coordinates = ((Location) ((Point) f.geometry()).coordinates());
-                        mapboxMap.addMarker(
-                                new MarkerViewOptions().position(new
-                                        LatLng(coordinates.getLatitude(),
-                                        coordinates.getLongitude()))
+                        mapboxMap.addMarker(new MarkerViewOptions()
+                                .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude()))
                         );
                     }
                 }
-            } catch (MalformedURLException e) {
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
                 e.printStackTrace();
             }
+            Log.d(tag, "geojson rendered.");
 
-
-            //    URL geoJsonUrl = new URL("http://homepages.inf.ed.ac.uk/stg/coinz/" + downloadDate + "/coinzmap.geojson");
-
-//            try {
-//                DownloadFileTask dl = new DownloadFileTask();
-//                String geoJsonUrl = dl.doInBackground(url);
-//      //         Uri geoJsonUrl = Uri.parse(new java.net.URI("http://homepages.inf.ed.ac.uk/stg/coinz/" + downloadDate + "/coinzmap.geojson").toString());
-//
-//                try {
-//                   // String sUrl = getStringFromFile(geoJsonUrl,getApplicationContext());
-//                    GeoJsonSource geoJsonSource = new GeoJsonSource("geojson-source", geoJsonUrl);
-//                    mapboxMap.addSource(geoJsonSource);
-//
-//                    Log.d(tag,"source added");
-//                    FeatureCollection featureCollection = FeatureCollection.fromJson(geoJsonUrl);
-//
-//                    List<Feature> features = featureCollection.features();
-//
-//                    Log.d(tag,"feature collection got");
-//
-//                    for (Feature f : features) {
-//                        if (f.geometry() instanceof Point) {
-//                            Location coordinates = ((Location) ((Point) f.geometry()).coordinates());
-//                            mapboxMap.addMarker(
-//                                    new MarkerViewOptions().position(new
-//                                            LatLng(coordinates.getLatitude(),
-//                                            coordinates.getLongitude()))
-//                            );
-//                        }
-//                    }
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            } catch (URISyntaxException e) {
-//                e.printStackTrace();
-//            }
-            Log.d(tag,"geojson rendered.");
         }
     }
+//                FeatureCollection featureCollection = FeatureCollection.fromJson(result);
+//
+//                GeoJsonSource geoJsonSource = new GeoJsonSource("marker-source", featureCollection);
+//                mapboxMap.addSource(geoJsonSource);
+//
+//                Bitmap icon = BitmapFactory.decodeResource(
+//                        MainActivity.this.getResources(), R.drawable.ic_maneuver_fork);
+//
+//                mapboxMap.addImage("my-marker-image", icon);
+//
+//                SymbolLayer markers = new SymbolLayer("marker-layer", "marker-source")
+//                        .withProperties(PropertyFactory.iconImage("my-marker-image"));
+//                mapboxMap.addLayer(markers);
 
 
-//    private static String convertStreamToString(InputStream is) throws Exception {
-//
-//        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-//
-//        StringBuilder sb = new StringBuilder();
-//        String line = null;
-//        while ((line = reader.readLine()) != null) {
-//            sb.append(line).append("\n");
-//        }
-//        reader.close();
-//        return sb.toString();
-//    }
-//
-//    public static String getStringFromFile(Uri fileUri, Context context) throws Exception {
-//        InputStream fin = context.getContentResolver().openInputStream(fileUri);
-//
-//        String ret = convertStreamToString(fin);
-//
-//        fin.close();
-//        return ret;
-//    }
 
     private void enableLocation() {
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
@@ -277,6 +237,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onLocationChanged(Location location) {
+        System.out.println(location.toString());
         if (location == null) {
             Log.d(tag, "[onLocationChanged] location is null");
         } else {
@@ -312,8 +273,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Restore preferences
         SharedPreferences settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE);
-        // use ”” as the default value (this might be the first time the app is run)
-//        downloadDate = settings.getString("lastDownloadDate", "");
+        downloadDate = settings.getString("lastDownloadDate", "");
         Log.d(tag, "[onStart] Recalled lastDownloadDate is " + downloadDate );
 
         mapView.onStart();
@@ -376,9 +336,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         @NonNull
         private String readStream(InputStream stream)
-                throws IOException {
+                 {
             // Read input from stream, build result as a string
-            return null;
+                     java.util.Scanner s = new java.util.Scanner(stream).useDelimiter("\\A");
+                     return s.hasNext() ? s.next() : "";
         }
 
         @Override
