@@ -48,7 +48,7 @@ public class firebaseLogin extends AppCompatActivity {
                     Log.d(TAG,"onAuthStateChanged:Signed_out");
                     Toast.makeText(getApplicationContext(),
 
-                            "Successfully signed out ",
+                            "Not logged in yet",
                             Toast.LENGTH_SHORT).show();
                 }
             }

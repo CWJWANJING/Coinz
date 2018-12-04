@@ -165,22 +165,34 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     if (f.geometry() instanceof Point) {
                         if (f.getStringProperty("currency").equals("QUID")){
                             mapboxMap.addMarker(new MarkerViewOptions()
-                                    .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude())).icon(icon0)
+                                    .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude()))
+                                    .icon(icon0)
+                                    .snippet(f.getStringProperty("value") + " " + f.getStringProperty("currency"))
+                                    .title(f.getStringProperty("id"))
                             );
                         }
                         else if (f.getStringProperty("currency").equals("SHIL")){
                             mapboxMap.addMarker(new MarkerViewOptions()
-                                    .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude())).icon(icon1)
+                                    .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude()))
+                                    .icon(icon1)
+                                    .snippet(f.getStringProperty("value") + " " + f.getStringProperty("currency"))
+                                    .title(f.getStringProperty("id"))
                             );
                         }
                         else if (f.getStringProperty("currency").equals("PENY")){
                             mapboxMap.addMarker(new MarkerViewOptions()
-                                    .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude())).icon(icon2)
+                                    .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude()))
+                                    .icon(icon2)
+                                    .snippet(f.getStringProperty("value") + " " + f.getStringProperty("currency"))
+                                    .title(f.getStringProperty("id"))
                             );
                         }
                         else if (f.getStringProperty("currency").equals("DOLR")){
                             mapboxMap.addMarker(new MarkerViewOptions()
-                                    .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude())).icon(icon3)
+                                    .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude()))
+                                    .icon(icon3)
+                                    .snippet(f.getStringProperty("value") + " " + f.getStringProperty("currency"))
+                                    .title(f.getStringProperty("id"))
                             );
                         }
                     }
