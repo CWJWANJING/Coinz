@@ -43,6 +43,8 @@ import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
+import com.mapbox.mapboxsdk.annotations.Icon;
+import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
@@ -147,18 +149,40 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 GeoJsonSource source = new GeoJsonSource("geojson", result);
                 mapboxMap.addSource(source);
-                LineLayer lineLayer = new LineLayer("geojson", "geojson");
-                lineLayer.setProperties();
-                mapboxMap.addLayer(lineLayer);
+
+
+                IconFactory iconFactory = IconFactory.getInstance(MainActivity.this);
+                Icon icon0 = iconFactory.fromResource(R.drawable.icon0);
+                Icon icon1 = iconFactory.fromResource(R.drawable.icon1);
+                Icon icon2 = iconFactory.fromResource(R.drawable.icon2);
+                Icon icon3 = iconFactory.fromResource(R.drawable.icon3);
+
 
                 FeatureCollection featureCollection = FeatureCollection.fromJson(result);
                 List<Feature> features = featureCollection.features();
 
                 for (Feature f : features) {
                     if (f.geometry() instanceof Point) {
-                        mapboxMap.addMarker(new MarkerViewOptions()
-                                .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude()))
-                        );
+                        if (f.getStringProperty("currency").equals("QUID")){
+                            mapboxMap.addMarker(new MarkerViewOptions()
+                                    .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude())).icon(icon0)
+                            );
+                        }
+                        else if (f.getStringProperty("currency").equals("SHIL")){
+                            mapboxMap.addMarker(new MarkerViewOptions()
+                                    .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude())).icon(icon1)
+                            );
+                        }
+                        else if (f.getStringProperty("currency").equals("PENY")){
+                            mapboxMap.addMarker(new MarkerViewOptions()
+                                    .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude())).icon(icon2)
+                            );
+                        }
+                        else if (f.getStringProperty("currency").equals("DOLR")){
+                            mapboxMap.addMarker(new MarkerViewOptions()
+                                    .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude())).icon(icon3)
+                            );
+                        }
                     }
                 }
             } catch (InterruptedException e) {
