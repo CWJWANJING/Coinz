@@ -10,4 +10,8 @@
         <item name="windowActionBar">false</item>
     </style>
 
+    <style name="coinz" parent="AppTheme" >
+        <item name="colorPrimaryDark">?attr/colorPrimaryDark</item>
+    </style>
+
 </resources>

@@ -34,7 +34,8 @@
         <activity android:name=".Communicaz_Activity" />
         <activity android:name=".firebaseLogin" />
         <activity android:name=".Setting" />
-        <activity android:name=".Register"></activity>
+        <activity android:name=".Register" />
+        <activity android:name=".Transfer"></activity>
     </application>
 
 </manifest>

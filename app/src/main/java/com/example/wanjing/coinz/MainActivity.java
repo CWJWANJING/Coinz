@@ -126,18 +126,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final String preferencesFile = "MyPrefsFile"; // for storing preferences
 
     // for store data in firestore
-    private FirebaseAuth mAuth;
     private FirebaseFirestore firestore;
     private DocumentReference firestoreBank;
     private static final String t = "Bank";
     private static final String COLLECTION_KEY = "Bank";
-
-    private EditText memail;
-    private Button mstore;
-    private EditText mCoins;
-
-    private static final String email = "Name";
-    private static final String coins = "Text";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -158,13 +150,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .build();
         firestore.setFirestoreSettings(settings);
 
-        memail = findViewById(R.id.userEmail);
-        mstore = findViewById(R.id.store);
-        mCoins = findViewById(R.id.coins);
-
         firestoreBank = firestore.collection(COLLECTION_KEY).document();
-
-        mstore.setOnClickListener(view -> store());
 
         // I tried to collect the coins automatically, but for some reason, it fails:
 //        String userID = mAuth.getCurrentUser().getUid();
@@ -173,24 +159,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //        userMap.put(user,defalt);
 //        firestoreBank.set(userMap);
     }
-
-    private void store() {
-        // create a message of the form { ”email”: str1, ”coins”: str2 }
-        Map<String, String> bank = new HashMap<>();
-        bank.put(email, memail.getText().toString());
-        bank.put(coins, mCoins.getText().toString());
-        // send the message and listen for success or failure
-        firestoreBank.set(bank)
-                .addOnSuccessListener(v -> Toast.makeText(getApplicationContext(),
-
-                        "Message sent!",
-                        Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e -> {
-                    Log.e(t, e.getMessage());
-                });
-
-    }
-
 
     // downloading the file from url
     String url = "http://homepages.inf.ed.ac.uk/stg/coinz/" + currentDate + "/coinzmap.geojson";
@@ -249,9 +217,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 String rD = json_rates.get("QUID").toString();
 
 
-                float rateq = Float.parseFloat(rQ) / Float.parseFloat(rD);
-                float rates = Float.parseFloat(rS) / Float.parseFloat(rD);
-                float ratep = Float.parseFloat(rP) / Float.parseFloat(rD);
+                float rateq = Float.parseFloat(rQ);
+                float rates = Float.parseFloat(rS);
+                float ratep = Float.parseFloat(rP);
+                float rated = Float.parseFloat(rD);
                 // loop through feature collection to add each feature with different icons according to their currencies
                 for (Feature f : features) {
                     if (f.geometry() instanceof Point) {
@@ -283,7 +252,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             mapboxMap.addMarker(new MarkerViewOptions()
                                     .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude()))
                                     .icon(icon3)
-                                    .snippet(Float.toString(ratep*Float.parseFloat(f.getStringProperty("value"))))
+                                    .snippet(Float.toString(rated*Float.parseFloat(f.getStringProperty("value"))))
                                     .title(f.getStringProperty("id"))
                             );
                         }
@@ -346,6 +315,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         map.animateCamera(CameraUpdateFactory.newLatLng(latLng));
     }
 
+
+    // get the user email from firestore
+    String userEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
+
     @Override
     public void onLocationChanged(Location location) {
         System.out.println(location.toString());
@@ -387,10 +360,55 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     return o1.compareTo(o2);
                 }});
 
-            if (mAuth != null) {
-                Log.d(t,"mAuth is not null");
-                String userID = mAuth.getCurrentUser().getUid();
+            // get the currency rates from geojson file
+            JSONObject myObject = null;
+            try {
+                myObject = new JSONObject(result);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            JSONObject json_rates = null;
+            try {
+                json_rates = myObject.getJSONObject("rates");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            String rS = null;
+            try {
+                rS = json_rates.get("SHIL").toString();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            String rP = null;
+            try {
+                rP = json_rates.get("PENY").toString();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            String rQ = null;
+            try {
+                rQ = json_rates.get("QUID").toString();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            String rD = null;
+            try {
+                rD = json_rates.get("QUID").toString();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+
+            float rateq = Float.parseFloat(rQ);
+            float rates = Float.parseFloat(rS);
+            float ratep = Float.parseFloat(rP);
+            float rated = Float.parseFloat(rD);
+
+            if (userEmail != null) {
+                Log.d(t,"userEmial is not null");
                 Map<String, Float> userMap = new HashMap<>();
+                // defalt coins is 0
+                Float coinz = 0f;
 
                 for (Feature f : features) {
                     // get the index of closest marker
@@ -401,44 +419,83 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         int minindex = abcd.indexOf(min);
                         if (f.getStringProperty("currency").equals("QUID")) {
                             String coins = features.get(minindex).getStringProperty("value");
-                            Float coinint = Float.parseFloat(coins);
-                            userMap.put(userID, coinint);
-                            firestoreBank.set(userMap);
-                            Toast.makeText(getApplicationContext(),
-                                    "QUID coins collected!",
-                                    Toast.LENGTH_LONG).show();
-//                        int rate = Integer.parseInt(rQ) / Integer.parseInt(rD);
-//                        int c = Integer.parseInt(features.get(minindex).getStringProperty("value"))*rate;
-//                        String s = Integer.toString(c);
+                            coinz = coinz + Float.parseFloat(coins)/rateq;
+                            if (coinz > 25){
+                                userMap.clear();
+                                userMap.put(userEmail, Float.parseFloat("25"));
+                                Float spare = coinz - 25;
+                                Toast.makeText(getApplicationContext(),
+                                        "Coins reach maximum, transfer " + spare + "to your friend!",
+                                        Toast.LENGTH_LONG).show();
+                            }else{
+//                                Float existcoin = userMap.get(userEmail);
+                                userMap.put(userEmail, coinz);
+                                firestoreBank.collection("Bank").add(userMap);
+                                Toast.makeText(getApplicationContext(),
+                                        "QUID coins collected!",
+                                        Toast.LENGTH_LONG).show();
+                            }
+                            // after collected, cannot collect again.
+//                            features.remove(minindex);
                         }
                         else if(f.getStringProperty("currency").equals("SHIL")){
                             String coins = features.get(minindex).getStringProperty("value");
-                            Float coinint = Float.parseFloat(coins);
-                            userMap.put(userID, coinint);
-                            firestoreBank.set(userMap);
-                            Toast.makeText(getApplicationContext(),
-                                    "SHIL coins collected!",
-                                    Toast.LENGTH_LONG).show();
+                            coinz = coinz + Float.parseFloat(coins)/rates;
+                            if (coinz > 25){
+                                userMap.clear();
+                                userMap.put(userEmail, Float.parseFloat("25"));
+                                Float spare = coinz - 25;
+                                Toast.makeText(getApplicationContext(),
+                                        "Coins reach maximum, transfer " + spare + "to your friend!",
+                                        Toast.LENGTH_LONG).show();
+                            }else {
+                                userMap.put(userEmail, coinz);
+                                firestoreBank.collection("Bank").add(userMap);
+                                Toast.makeText(getApplicationContext(),
+                                        "SHIL coins collected!",
+                                        Toast.LENGTH_LONG).show();
+                            }
+//                            features.remove(minindex);
                         }else if (f.getStringProperty("currency").equals("PENY")){
                             String coins = features.get(minindex).getStringProperty("value");
-                            Float coinint = Float.parseFloat(coins);
-                            userMap.put(userID, coinint);
-                            firestoreBank.set(userMap);
-                            Toast.makeText(getApplicationContext(),
-                                    "PENY coins collected!",
-                                    Toast.LENGTH_LONG).show();
+                            coinz = coinz + Float.parseFloat(coins)/ratep;
+                            if (coinz > 25){
+                                userMap.clear();
+                                userMap.put(userEmail, Float.parseFloat("25"));
+                                Float spare = coinz - 25;
+                                Toast.makeText(getApplicationContext(),
+                                        "Coins reach maximum, transfer " + spare + "to your friend!",
+                                        Toast.LENGTH_LONG).show();
+                            }else {
+                                userMap.put(userEmail, coinz);
+                                firestoreBank.collection("Bank").add(userMap);
+                                Toast.makeText(getApplicationContext(),
+                                        "PENY coins collected!",
+                                        Toast.LENGTH_LONG).show();
+                            }
+//                            features.remove(minindex);
                         }else if (f.getStringProperty("currency").equals("DOLR")){
                             String coins = features.get(minindex).getStringProperty("value");
-                            Float coinint = Float.parseFloat(coins);
-                            userMap.put(userID, coinint);
-                            firestoreBank.set(userMap);
-                            Toast.makeText(getApplicationContext(),
-                                    "DOLR coins collected!",
-                                    Toast.LENGTH_LONG).show();
+                            coinz = coinz + Float.parseFloat(coins)/rated + userMap.get(userEmail);
+                            if (coinz > 25){
+                                userMap.clear();
+                                userMap.put(userEmail, Float.parseFloat("25"));
+                                Float spare = coinz - 25;
+                                Toast.makeText(getApplicationContext(),
+                                        "Coins reach maximum, transfer " + spare + "to your friend!",
+                                        Toast.LENGTH_LONG).show();
+                            }else {
+                                userMap.put(userEmail, coinz);
+                                firestoreBank.collection("Bank").add(userMap);
+                                Toast.makeText(getApplicationContext(),
+                                        "DOLR coins collected!",
+                                        Toast.LENGTH_LONG).show();
+                            }
+//                            features.remove(minindex);
                         }
                     }
                 }// end of for loop
-            }else{Log.d(t,"mAuth is null");}
+            }else{Log.d(t,"user is null");}
         }
     }
 
@@ -542,12 +599,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             super.onPostExecute(result);
             DownloadCompleteRunner.downloadComplete(result);
         }
-    }
-
-
-    public void Communicaz(View view){
-        Intent startNewActivity = new Intent(this,Communicaz_Activity.class);
-        startActivity(startNewActivity);
     }
 
     public void Setting(View view){
