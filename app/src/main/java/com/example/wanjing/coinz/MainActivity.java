@@ -421,13 +421,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             String coins = features.get(minindex).getStringProperty("value");
                             coinz = coinz + Float.parseFloat(coins)/rateq;
                             if (coinz > 25){
-                                userMap.clear();
                                 userMap.put(userEmail, Float.parseFloat("25"));
+//                                firestoreBank.collection("Bank").document(userEmail).update(userMap);
                                 Float spare = coinz - 25;
                                 Toast.makeText(getApplicationContext(),
                                         "Coins reach maximum, transfer " + spare + "to your friend!",
                                         Toast.LENGTH_LONG).show();
                             }else{
+
 //                                Float existcoin = userMap.get(userEmail);
                                 userMap.put(userEmail, coinz);
                                 firestoreBank.collection("Bank").add(userMap);
