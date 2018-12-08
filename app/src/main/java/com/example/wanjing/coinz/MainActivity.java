@@ -429,7 +429,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                         Toast.LENGTH_LONG).show();
                             }else{
 
-//                                Float existcoin = userMap.get(userEmail);
                                 userMap.put(userEmail, coinz);
                                 firestoreBank.collection("Bank").add(userMap);
                                 Toast.makeText(getApplicationContext(),
