@@ -44,12 +44,6 @@ public class firebaseLogin extends AppCompatActivity {
 
                             "Successfully signed with " + user.getEmail(),
                             Toast.LENGTH_SHORT).show();
-                }else{
-                    Log.d(TAG,"onAuthStateChanged:Signed_out");
-                    Toast.makeText(getApplicationContext(),
-
-                            "Not logged in yet",
-                            Toast.LENGTH_SHORT).show();
                 }
             }
         };

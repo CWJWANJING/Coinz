@@ -150,7 +150,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .build();
         firestore.setFirestoreSettings(settings);
 
-        firestoreBank = firestore.collection(COLLECTION_KEY).document();
+        firestoreBank = firestore.collection(COLLECTION_KEY).document(COLLECTION_KEY);
 
         // I tried to collect the coins automatically, but for some reason, it fails:
 //        String userID = mAuth.getCurrentUser().getUid();
@@ -318,6 +318,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     // get the user email from firestore
     String userEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
+    // defalt coins is 0
+    Float coinz = 0f;
+    Map<String, Float> userMap = new HashMap<>();
 
     @Override
     public void onLocationChanged(Location location) {
@@ -343,6 +346,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     distanceInMeters[i] = originLocation.distanceTo(loc);
                 }
             }
+
+            Float[] disnotsort = distanceInMeters;
 
             // sort the array which store the distances
             Arrays.sort(distanceInMeters, new Comparator<Float>() {
@@ -406,97 +411,66 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             if (userEmail != null) {
                 Log.d(t,"userEmial is not null");
-                Map<String, Float> userMap = new HashMap<>();
-                // defalt coins is 0
-                Float coinz = 0f;
 
-                for (Feature f : features) {
                     // get the index of closest marker
                     // if user is close enough to a marker, then the value of coins is shown
-                    if (distanceInMeters[0] != null && distanceInMeters[0] < 25) {
-                        float min = distanceInMeters[0];
-                        List<Float> abcd = Arrays.asList(distanceInMeters);
-                        int minindex = abcd.indexOf(min);
-                        if (f.getStringProperty("currency").equals("QUID")) {
+                    if (distanceInMeters[0] != null && distanceInMeters[0] <= 25) {
+                        Float min = distanceInMeters[0];
+                        String mins = Float.toString(min);
+                        Log.d(tag,mins);
+                        int minindex = findIndex(disnotsort,min);
+                        String mini = Integer.toString(minindex);
+                        Log.d(tag,mini);
+                        if (features.get(minindex).getStringProperty("currency").equals("QUID")) {
                             String coins = features.get(minindex).getStringProperty("value");
                             coinz = coinz + Float.parseFloat(coins)/rateq;
-                            if (coinz > 25){
-                                userMap.put(userEmail, Float.parseFloat("25"));
-//                                firestoreBank.collection("Bank").document(userEmail).update(userMap);
-                                Float spare = coinz - 25;
-                                Toast.makeText(getApplicationContext(),
-                                        "Coins reach maximum, transfer " + spare + "to your friend!",
-                                        Toast.LENGTH_LONG).show();
-                            }else{
-
-                                userMap.put(userEmail, coinz);
-                                firestoreBank.collection("Bank").add(userMap);
-                                Toast.makeText(getApplicationContext(),
-                                        "QUID coins collected!",
-                                        Toast.LENGTH_LONG).show();
-                            }
-                            // after collected, cannot collect again.
-//                            features.remove(minindex);
+                            Toast.makeText(getApplicationContext(),
+                                    "Coins QUID met!",
+                                    Toast.LENGTH_LONG).show();
                         }
-                        else if(f.getStringProperty("currency").equals("SHIL")){
+                        else if(features.get(minindex).getStringProperty("currency").equals("SHIL")){
                             String coins = features.get(minindex).getStringProperty("value");
                             coinz = coinz + Float.parseFloat(coins)/rates;
-                            if (coinz > 25){
-                                userMap.clear();
-                                userMap.put(userEmail, Float.parseFloat("25"));
-                                Float spare = coinz - 25;
-                                Toast.makeText(getApplicationContext(),
-                                        "Coins reach maximum, transfer " + spare + "to your friend!",
-                                        Toast.LENGTH_LONG).show();
-                            }else {
-                                userMap.put(userEmail, coinz);
-                                firestoreBank.collection("Bank").add(userMap);
-                                Toast.makeText(getApplicationContext(),
-                                        "SHIL coins collected!",
-                                        Toast.LENGTH_LONG).show();
-                            }
-//                            features.remove(minindex);
-                        }else if (f.getStringProperty("currency").equals("PENY")){
+                            Toast.makeText(getApplicationContext(),
+                                    "Coins SHIL met!",
+                                    Toast.LENGTH_LONG).show();
+                        }else if (features.get(minindex).getStringProperty("currency").equals("PENY")){
                             String coins = features.get(minindex).getStringProperty("value");
                             coinz = coinz + Float.parseFloat(coins)/ratep;
-                            if (coinz > 25){
-                                userMap.clear();
-                                userMap.put(userEmail, Float.parseFloat("25"));
-                                Float spare = coinz - 25;
-                                Toast.makeText(getApplicationContext(),
-                                        "Coins reach maximum, transfer " + spare + "to your friend!",
-                                        Toast.LENGTH_LONG).show();
-                            }else {
-                                userMap.put(userEmail, coinz);
-                                firestoreBank.collection("Bank").add(userMap);
-                                Toast.makeText(getApplicationContext(),
-                                        "PENY coins collected!",
-                                        Toast.LENGTH_LONG).show();
-                            }
-//                            features.remove(minindex);
-                        }else if (f.getStringProperty("currency").equals("DOLR")){
+                            Toast.makeText(getApplicationContext(),
+                                    "Coins PENY met!",
+                                    Toast.LENGTH_LONG).show();
+                        }else if (features.get(minindex).getStringProperty("currency").equals("DOLR")){
                             String coins = features.get(minindex).getStringProperty("value");
                             coinz = coinz + Float.parseFloat(coins)/rated + userMap.get(userEmail);
-                            if (coinz > 25){
-                                userMap.clear();
-                                userMap.put(userEmail, Float.parseFloat("25"));
-                                Float spare = coinz - 25;
-                                Toast.makeText(getApplicationContext(),
-                                        "Coins reach maximum, transfer " + spare + "to your friend!",
-                                        Toast.LENGTH_LONG).show();
-                            }else {
-                                userMap.put(userEmail, coinz);
-                                firestoreBank.collection("Bank").add(userMap);
-                                Toast.makeText(getApplicationContext(),
-                                        "DOLR coins collected!",
-                                        Toast.LENGTH_LONG).show();
-                            }
-//                            features.remove(minindex);
+                            Toast.makeText(getApplicationContext(),
+                                    "Coins DOLR met!",
+                                    Toast.LENGTH_LONG).show();
                         }
+                        // once coins collected, same coin cannot be collected again
+                        features.remove(minindex);
                     }
-                }// end of for loop
+
+                    if (coinz > 25){
+                        userMap.clear();
+                        userMap.put(userEmail, Float.parseFloat("25"));
+                        Float spare = coinz - 25;
+                        Toast.makeText(getApplicationContext(),
+                                "Coins reach maximum, transfer " + spare + "to your friend!",
+                                Toast.LENGTH_LONG).show();
+                    }
             }else{Log.d(t,"user is null");}
         }
+    }
+
+    private int findIndex(Float[] array, Float value){
+        int index = 0;
+        for(int i = 0; i < array.length; i++){
+            if(array[i]==value){
+                index = i;
+            }
+        }
+        return index;
     }
 
     @Override @SuppressWarnings("MissingPermission") public void onConnected() {
@@ -559,6 +533,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             locationEngine.removeLocationEngineListener(this);
             locationEngine.removeLocationUpdates();
         }
+        userMap.put(userEmail, coinz);
+        firestoreBank.set(userMap);
+        Toast.makeText(getApplicationContext(),
+                "Gold coins collected!",
+                Toast.LENGTH_LONG).show();
     }
 
 
