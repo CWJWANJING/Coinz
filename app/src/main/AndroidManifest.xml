@@ -37,7 +37,6 @@
         <activity android:name=".Register" />
         <activity android:name=".Transfer" />
         <activity android:name=".StepActivity" />
-        <activity android:name=".Theme"></activity>
     </application>
 
 </manifest>
