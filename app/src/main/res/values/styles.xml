@@ -11,7 +11,8 @@
     </style>
 
     <style name="coinz" parent="AppTheme" >
-        <item name="colorPrimaryDark">?attr/colorPrimaryDark</item>
+        <item name="colorPrimaryDark">#2BF48D</item>
+        <item name="android:textColor">#B9F7D1</item>
     </style>
 
 </resources>

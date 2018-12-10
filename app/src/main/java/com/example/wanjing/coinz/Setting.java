@@ -42,4 +42,14 @@ public class Setting extends AppCompatActivity {
         Intent startNewActivity = new Intent(this,Transfer.class);
         startActivity(startNewActivity);
     }
+
+    public void StepActivity(View view){
+        Intent startNewActivity = new Intent(this,StepActivity.class);
+        startActivity(startNewActivity);
+    }
+
+    public void Theme(View view){
+        Intent startNewActivity = new Intent(this,Theme.class);
+        startActivity(startNewActivity);
+    }
 }
