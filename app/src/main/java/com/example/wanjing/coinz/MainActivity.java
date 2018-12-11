@@ -528,13 +528,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             userMap.put(userEmail, Float.parseFloat("25"));
             Float spare = coinz - 25;
             Toast.makeText(getApplicationContext(),
-                    "Coins reach maximum, transfer " + spare + "to your friend! Distance walked: " + d,
+                    "Coins reach maximum, transfer " + spare + "to your friend! Distance walked: " + d + "meters",
                     Toast.LENGTH_LONG).show();
         }else{
             userMap.put(userEmail, coinz);
             firestoreBank.set(userMap);
             Toast.makeText(getApplicationContext(),
-                    coinz + " Gold coins collected, distance walked: " + d + "!",
+                    coinz + " Gold coins collected, distance walked: " + d + "meters!",
                     Toast.LENGTH_LONG).show();
         }
     }
