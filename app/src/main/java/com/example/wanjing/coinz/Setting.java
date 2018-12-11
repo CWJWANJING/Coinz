@@ -68,9 +68,5 @@ public class Setting extends AppCompatActivity {
         startActivity(startNewActivity);
     }
 
-    public void StepActivity(View view){
-        Intent startNewActivity = new Intent(this,StepActivity.class);
-        startActivity(startNewActivity);
-    }
 
 }

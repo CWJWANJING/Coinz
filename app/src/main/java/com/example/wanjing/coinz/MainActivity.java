@@ -152,12 +152,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         firestoreBank = firestore.collection(COLLECTION_KEY).document(COLLECTION_KEY);
 
-        // I tried to collect the coins automatically, but for some reason, it fails:
-//        String userID = mAuth.getCurrentUser().getUid();
-//        Float defalt = 0f;
-//        Map<String,Float> userMap = new HashMap<>();
-//        userMap.put(user,defalt);
-//        firestoreBank.set(userMap);
     }
 
     // downloading the file from url
@@ -321,6 +315,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     // defalt coins is 0
     Float coinz = 0f;
     Map<String, Float> userMap = new HashMap<>();
+    Float d = 0f;
 
     @Override
     public void onLocationChanged(Location location) {
@@ -329,6 +324,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             Log.d(tag, "[onLocationChanged] location is null");
         } else {
             Log.d(tag, "[onLocationChanged] location is not null");
+            if (originLocation != null){
+                d = d + originLocation.distanceTo(location);
+            }
             originLocation = location;
             setCameraPosition(location);
 
@@ -442,22 +440,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     Toast.LENGTH_LONG).show();
                         }else if (features.get(minindex).getStringProperty("currency").equals("DOLR")){
                             String coins = features.get(minindex).getStringProperty("value");
-                            coinz = coinz + Float.parseFloat(coins)/rated + userMap.get(userEmail);
+                            coinz = coinz + Float.parseFloat(coins)/rated;
                             Toast.makeText(getApplicationContext(),
                                     "Coins DOLR met!",
                                     Toast.LENGTH_LONG).show();
                         }
                         // once coins collected, same coin cannot be collected again
                         features.remove(minindex);
-                    }
-
-                    if (coinz > 25){
-                        userMap.clear();
-                        userMap.put(userEmail, Float.parseFloat("25"));
-                        Float spare = coinz - 25;
-                        Toast.makeText(getApplicationContext(),
-                                "Coins reach maximum, transfer " + spare + "to your friend!",
-                                Toast.LENGTH_LONG).show();
                     }
             }else{Log.d(t,"user is null");}
         }
@@ -533,11 +522,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             locationEngine.removeLocationEngineListener(this);
             locationEngine.removeLocationUpdates();
         }
-        userMap.put(userEmail, coinz);
-        firestoreBank.set(userMap);
-        Toast.makeText(getApplicationContext(),
-                "Gold coins collected!",
-                Toast.LENGTH_LONG).show();
+
+        // check if coins reaches 25
+        if (coinz > 25){
+            userMap.put(userEmail, Float.parseFloat("25"));
+            Float spare = coinz - 25;
+            Toast.makeText(getApplicationContext(),
+                    "Coins reach maximum, transfer " + spare + "to your friend! Distance walked: " + d,
+                    Toast.LENGTH_LONG).show();
+        }else{
+            userMap.put(userEmail, coinz);
+            firestoreBank.set(userMap);
+            Toast.makeText(getApplicationContext(),
+                    coinz + " Gold coins collected, distance walked: " + d + "!",
+                    Toast.LENGTH_LONG).show();
+        }
     }
 
 
