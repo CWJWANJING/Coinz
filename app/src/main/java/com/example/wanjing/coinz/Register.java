@@ -1,15 +1,12 @@
 package com.example.wanjing.coinz;
 
 import android.content.Context;
-import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -17,12 +14,13 @@ import com.google.firebase.auth.FirebaseUser;
 
 public class Register extends AppCompatActivity {
 
+    // set up for firestore
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
 
     private Context mContext;
-    private String email,username,password;
-    private EditText mEmail,mPassword,mUsername;
+    private String email,password;
+    private EditText mEmail,mPassword;
     private Button bRegister;
     private firebaseMethods fm;
 
@@ -71,9 +69,9 @@ public class Register extends AppCompatActivity {
 
     private void initWidget(){
         Log.d(TAG,"initializing widgt");
-        mEmail = (EditText) findViewById(R.id.input_email);
-        mPassword = (EditText) findViewById(R.id.input_password);
-        bRegister = (Button) findViewById(R.id.Register);
+        mEmail = findViewById(R.id.input_email);
+        mPassword = findViewById(R.id.input_password);
+        bRegister = findViewById(R.id.Register);
         mContext = Register.this;
     }
 

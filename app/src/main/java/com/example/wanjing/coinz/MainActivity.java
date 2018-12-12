@@ -4,39 +4,25 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.icu.text.SimpleDateFormat;
 import android.icu.util.Calendar;
 import android.location.Location;
 
-import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Handler;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
 
-import com.google.android.gms.common.util.IOUtils;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.ActionCodeSettings;
-import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.EmailAuthProvider;
+
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.SignInMethodQueryResult;
+
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
+
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
 import com.mapbox.android.core.location.LocationEngine;
@@ -56,35 +42,23 @@ import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
-import com.mapbox.mapboxsdk.geometry.LatLngBounds;
+
 import com.mapbox.mapboxsdk.location.modes.CameraMode;
 import com.mapbox.mapboxsdk.location.modes.RenderMode;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin;
-import com.mapbox.mapboxsdk.style.layers.LineLayer;
 
-
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
-import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
-import com.mapbox.mapboxsdk.style.light.Position;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
-import com.mapbox.mapboxsdk.style.sources.Source;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringWriter;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 
-import java.net.URISyntaxException;
+import java.net.HttpURLConnection;
+
 import java.net.URL;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
+
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
@@ -93,13 +67,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import org.json.JSONArray;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import timber.log.Timber;
-
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
 
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, LocationEngineListener, PermissionsListener {
@@ -130,6 +101,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private DocumentReference firestoreBank;
     private static final String t = "Bank";
     private static final String COLLECTION_KEY = "Bank";
+
+    // get the user email from firestore
+    String userEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
+    // default coins is 0
+    Float coinz = 0f;
+    Map<String, Object> userMap = new HashMap<>();
+    // default distance is 0
+    Float d = 0f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -215,14 +194,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 float rates = Float.parseFloat(rS);
                 float ratep = Float.parseFloat(rP);
                 float rated = Float.parseFloat(rD);
-                // loop through feature collection to add each feature with different icons according to their currencies
+                // loop through feature collection to add each feature with different icons according to their currencies,
+                // with the snippet showing the actual gold coins value, by dividing the currency value by the corresponding currency rate
                 for (Feature f : features) {
                     if (f.geometry() instanceof Point) {
                         if (f.getStringProperty("currency").equals("QUID")){
                                 mapboxMap.addMarker(new MarkerViewOptions()
                                         .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude()))
                                         .icon(icon0)
-                                        .snippet(Float.toString(rateq*Float.parseFloat(f.getStringProperty("value"))))
+                                        .snippet(Float.toString(Float.parseFloat(f.getStringProperty("value"))/rateq))
                                         .title(f.getStringProperty("id"))
                                 );
                         }
@@ -230,7 +210,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             mapboxMap.addMarker(new MarkerViewOptions()
                                     .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude()))
                                     .icon(icon1)
-                                    .snippet(Float.toString(rates*Float.parseFloat(f.getStringProperty("value"))))
+                                    .snippet(Float.toString(Float.parseFloat(f.getStringProperty("value"))/rates))
                                     .title(f.getStringProperty("id"))
                             );
                         }
@@ -238,7 +218,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             mapboxMap.addMarker(new MarkerViewOptions()
                                     .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude()))
                                     .icon(icon2)
-                                    .snippet(Float.toString(ratep*Float.parseFloat(f.getStringProperty("value"))))
+                                    .snippet(Float.toString(Float.parseFloat(f.getStringProperty("value"))/ratep))
                                     .title(f.getStringProperty("id"))
                             );
                         }
@@ -246,7 +226,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             mapboxMap.addMarker(new MarkerViewOptions()
                                     .position(new LatLng(((Point) f.geometry()).latitude(), ((Point) f.geometry()).longitude()))
                                     .icon(icon3)
-                                    .snippet(Float.toString(rated*Float.parseFloat(f.getStringProperty("value"))))
+                                    .snippet(Float.toString(Float.parseFloat(f.getStringProperty("value"))/rated))
                                     .title(f.getStringProperty("id"))
                             );
                         }
@@ -310,13 +290,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
-    // get the user email from firestore
-    String userEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
-    // defalt coins is 0
-    Float coinz = 0f;
-    Map<String, Float> userMap = new HashMap<>();
-    Float d = 0f;
-
     @Override
     public void onLocationChanged(Location location) {
         System.out.println(location.toString());
@@ -324,6 +297,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             Log.d(tag, "[onLocationChanged] location is null");
         } else {
             Log.d(tag, "[onLocationChanged] location is not null");
+            // if the original location is not null, then calculate the distance between the changed location and
+            // original location, with cumulative sum of distance d
             if (originLocation != null){
                 d = d + originLocation.distanceTo(location);
             }
@@ -334,7 +309,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             FeatureCollection featureCollection = FeatureCollection.fromJson(result);
             List<Feature> features = featureCollection.features();
 
-            // calculate the distances between each feature and the current location
+            // calculate the distances between each feature and the current location and store them into an array
             Float[] distanceInMeters = new Float[features.size()];
             for (int i = 0; i < features.size(); i++){
                 Location loc = new Location("");
@@ -345,6 +320,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
 
+            // get the diatance array which is not sorted
             Float[] disnotsort = distanceInMeters;
 
             // sort the array which store the distances
@@ -410,52 +386,54 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (userEmail != null) {
                 Log.d(t,"userEmial is not null");
 
-                    // get the index of closest marker
-                    // if user is close enough to a marker, then the value of coins is shown
-                    if (distanceInMeters[0] != null && distanceInMeters[0] <= 25) {
-                        Float min = distanceInMeters[0];
-                        String mins = Float.toString(min);
-                        Log.d(tag,mins);
-                        int minindex = findIndex(disnotsort,min);
-                        String mini = Integer.toString(minindex);
-                        Log.d(tag,mini);
-                        if (features.get(minindex).getStringProperty("currency").equals("QUID")) {
-                            String coins = features.get(minindex).getStringProperty("value");
-                            coinz = coinz + Float.parseFloat(coins)/rateq;
-                            Toast.makeText(getApplicationContext(),
-                                    "Coins QUID met!",
-                                    Toast.LENGTH_LONG).show();
-                        }
-                        else if(features.get(minindex).getStringProperty("currency").equals("SHIL")){
-                            String coins = features.get(minindex).getStringProperty("value");
-                            coinz = coinz + Float.parseFloat(coins)/rates;
-                            Toast.makeText(getApplicationContext(),
-                                    "Coins SHIL met!",
-                                    Toast.LENGTH_LONG).show();
-                        }else if (features.get(minindex).getStringProperty("currency").equals("PENY")){
-                            String coins = features.get(minindex).getStringProperty("value");
-                            coinz = coinz + Float.parseFloat(coins)/ratep;
-                            Toast.makeText(getApplicationContext(),
-                                    "Coins PENY met!",
-                                    Toast.LENGTH_LONG).show();
-                        }else if (features.get(minindex).getStringProperty("currency").equals("DOLR")){
-                            String coins = features.get(minindex).getStringProperty("value");
-                            coinz = coinz + Float.parseFloat(coins)/rated;
-                            Toast.makeText(getApplicationContext(),
-                                    "Coins DOLR met!",
-                                    Toast.LENGTH_LONG).show();
-                        }
-                        // once coins collected, same coin cannot be collected again
-                        features.remove(minindex);
+                // after sorting the distance array, the minimum distance should be at the first position
+                // get the index of closest marker
+                // if user is close enough to a marker, then the value of coins is added to variable coinz
+                if (distanceInMeters[0] != null && distanceInMeters[0] <= 25) {
+                    Float min = distanceInMeters[0];
+                    String mins = Float.toString(min);
+                    Log.d(tag,mins);
+                    int minindex = findIndex(disnotsort,min);
+                    String mini = Integer.toString(minindex);
+                    Log.d(tag,mini);
+                    if (features.get(minindex).getStringProperty("currency").equals("QUID")) {
+                        String coins = features.get(minindex).getStringProperty("value");
+                        coinz = coinz + Float.parseFloat(coins)/rateq;
+                        Toast.makeText(getApplicationContext(),
+                                "Coins QUID met!",
+                                Toast.LENGTH_LONG).show();
                     }
+                    else if(features.get(minindex).getStringProperty("currency").equals("SHIL")){
+                        String coins = features.get(minindex).getStringProperty("value");
+                        coinz = coinz + Float.parseFloat(coins)/rates;
+                        Toast.makeText(getApplicationContext(),
+                                "Coins SHIL met!",
+                                Toast.LENGTH_LONG).show();
+                    }else if (features.get(minindex).getStringProperty("currency").equals("PENY")){
+                        String coins = features.get(minindex).getStringProperty("value");
+                        coinz = coinz + Float.parseFloat(coins)/ratep;
+                        Toast.makeText(getApplicationContext(),
+                                "Coins PENY met!",
+                                Toast.LENGTH_LONG).show();
+                    }else if (features.get(minindex).getStringProperty("currency").equals("DOLR")){
+                        String coins = features.get(minindex).getStringProperty("value");
+                        coinz = coinz + Float.parseFloat(coins)/rated;
+                        Toast.makeText(getApplicationContext(),
+                                "Coins DOLR met!",
+                                Toast.LENGTH_LONG).show();
+                    }
+                    // once coins collected, same coin cannot be collected again
+                    features.remove(minindex);
+                }
             }else{Log.d(t,"user is null");}
         }
     }
 
+    // this method is just for finding the index of a given value in an array
     private int findIndex(Float[] array, Float value){
         int index = 0;
         for(int i = 0; i < array.length; i++){
-            if(array[i]==value){
+            if(array[i].equals(value)){
                 index = i;
             }
         }
@@ -478,7 +456,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (granted) {
             enableLocation();
         } else {
-        // Open a dialogue with the user
+            Toast.makeText(getApplicationContext(),
+                    "Please grant the permission!",
+                    Toast.LENGTH_LONG).show();
         }
     }
 
@@ -523,25 +503,55 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             locationEngine.removeLocationUpdates();
         }
 
-        // check if coins reaches 25
-        if (coinz > 25){
-            userMap.put(userEmail, Float.parseFloat("25"));
-            Float spare = coinz - 25;
-            Toast.makeText(getApplicationContext(),
-                    "Coins reach maximum, transfer " + spare + "to your friend! Distance walked: " + d + "meters",
-                    Toast.LENGTH_LONG).show();
-        }else{
-            userMap.put(userEmail, coinz);
-            firestoreBank.set(userMap);
-            Toast.makeText(getApplicationContext(),
-                    coinz + " Gold coins collected, distance walked: " + d + "meters!",
-                    Toast.LENGTH_LONG).show();
-        }
+
+//        Float precoin = 0f;
+//        Map<String, Object> preuser = firestoreBank.get().getResult().getData();
+//        if(preuser != null && preuser.get(userEmail) != null){
+//           precoin = (Float) preuser.get(userEmail);
+//            if (coinz > 25){
+//                Float spare = coinz - 25;
+//                coinz = 25 + precoin;
+//                userMap.put(userEmail, coinz);
+//                firestoreBank.update(userMap);
+//                Toast.makeText(getApplicationContext(),
+//                        "Coins reach maximum, transfer " + spare + "to your friend! Distance walked: " + d + "meters",
+//                        Toast.LENGTH_LONG).show();
+//            }else{
+//                coinz = coinz + precoin;
+//                userMap.put(userEmail, coinz);
+//                firestoreBank.update(userMap);
+//                Toast.makeText(getApplicationContext(),
+//                        coinz + " Gold coins collected, distance walked: " + d + "meters!",
+//                        Toast.LENGTH_LONG).show();
+//            }
+//           Log.d(t,precoin.toString());
+//        }else{
+
+
+            // check if the number of coins reaches 25,
+            // if 25 is reached, then put 25 into database and inform user to transfer how much amount to other user
+            // if not reach 25, then just store the coinz amount,
+            // both situations shows how much distances users have walked while they're using the main activity with the 'Toast'.
+            if (coinz > 25){
+                Float spare = coinz - 25;
+                userMap.put(userEmail, Float.parseFloat("25"));
+                firestoreBank.update(userMap);
+                Toast.makeText(getApplicationContext(),
+                        "Coins reach maximum, transfer " + spare + "to your friend! Distance walked: " + d + "meters",
+                        Toast.LENGTH_LONG).show();
+            }else{
+                userMap.put(userEmail, coinz);
+                firestoreBank.update(userMap);
+                Toast.makeText(getApplicationContext(),
+                        coinz + " Gold coins collected, distance walked: " + d + "meters!",
+                        Toast.LENGTH_LONG).show();
+            }
+        //}
     }
 
 
 
-
+    // the following class is just the class given in the lecture with readStream filled in.
     @SuppressLint("StaticFieldLeak")
     private class DownloadFileTask extends AsyncTask<String, Void, String> {
         @Override

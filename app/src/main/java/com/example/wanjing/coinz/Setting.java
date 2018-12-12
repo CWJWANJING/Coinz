@@ -5,16 +5,9 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Toast;
 
-import com.google.firebase.firestore.DocumentReference;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class Setting extends AppCompatActivity {
 
@@ -26,7 +19,8 @@ public class Setting extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setting);
 
-        btn = (Button) findViewById(R.id.theme);
+        // btn is for changing the theme
+        btn = findViewById(R.id.theme);
         btn.setOnClickListener((view) -> {
             saveFlag(!getFlag());
 
@@ -48,6 +42,7 @@ public class Setting extends AppCompatActivity {
         return preferences.getBoolean("green",false);
     }
 
+    // all the methods below are for directing user to corresponding activities when they click the corresponding buttons
     public void firebaseLogin(View view){
         Intent startNewActivity = new Intent(this,firebaseLogin.class);
         startActivity(startNewActivity);

@@ -40,14 +40,15 @@ public class Transfer extends AppCompatActivity {
         mstore.setOnClickListener(view -> store());
 
         firestore = FirebaseFirestore.getInstance();
-// Use com.google.firebase.Timestamp objects instead of java.util.Date objects
+
+        // Use com.google.firebase.Timestamp objects instead of java.util.Date objects
         FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder().setTimestampsInSnapshotsEnabled(true)
                 .build();
         firestore.setFirestoreSettings(settings);
         firestoreBank =
                 firestore.collection("Bank")
                         .document("Transfer");
-// Set a listener for changes to the /Chat/Message document
+        // Set a listener for changes to the /Bank/Transfer document
         realtimeUpdateListener();
     }
 

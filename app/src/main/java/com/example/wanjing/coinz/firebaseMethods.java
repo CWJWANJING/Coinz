@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.util.Log;
-import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -15,7 +14,6 @@ import com.google.firebase.auth.FirebaseAuth;
 public class firebaseMethods {
     private final String TAG = "firebaseMethods";
     private FirebaseAuth mAuth;
-    private FirebaseAuth.AuthStateListener mAuthListener;
     private Context mContext;
     private String userID;
 
@@ -51,6 +49,7 @@ public class firebaseMethods {
         });
     }
 
+    // when user wants to enter main activity and they click the button:
     private void enterMain() {
         Intent startNewActivity = new Intent(mContext,MainActivity.class);
         mContext.startActivity(startNewActivity);

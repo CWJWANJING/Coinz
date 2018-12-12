@@ -15,10 +15,12 @@ import com.google.firebase.auth.FirebaseUser;
 
 public class firebaseLogin extends AppCompatActivity {
 
+    // a general tag for firebaseLogin
     private static final String TAG = "firebaseLoin";
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
 
+    // set up for the Button and the EditText
     private EditText mEmail,mPassword;
     private Button bSignIn,bSignOut;
 
@@ -27,10 +29,10 @@ public class firebaseLogin extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_firebase_login);
 
-        mEmail = (EditText) findViewById(R.id.email);
-        mPassword = (EditText) findViewById(R.id.pass);
-        bSignIn = (Button) findViewById(R.id.SignIn);
-        bSignOut = (Button) findViewById(R.id.SignOut);
+        mEmail = findViewById(R.id.email);
+        mPassword = findViewById(R.id.pass);
+        bSignIn = findViewById(R.id.SignIn);
+        bSignOut = findViewById(R.id.SignOut);
 
         mAuth = FirebaseAuth.getInstance();
 
@@ -48,6 +50,7 @@ public class firebaseLogin extends AppCompatActivity {
             }
         };
 
+        // when sign in button is clicked:
         bSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -64,6 +67,7 @@ public class firebaseLogin extends AppCompatActivity {
             }
         });
 
+        // when sign out button is clicked:
         bSignOut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -87,11 +91,13 @@ public class firebaseLogin extends AppCompatActivity {
         super.onStop();
     }
 
+    // when user wants to go to setting page:
     public void Setting(View view){
         Intent startNewActivity = new Intent(this,Setting.class);
         startActivity(startNewActivity);
     }
 
+    // when user wants to go to main activity:
     public void MainActivity(View view){
         Intent startNewActivity = new Intent(this,MainActivity.class);
         startActivity(startNewActivity);
