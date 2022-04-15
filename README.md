@@ -1,2 +1,1 @@
-Name: Wanjing Chen 
-UUN: s1688291
+This is the first Android app I built. It is a game that players collect coins of different currencies by walking around the city. They can find the coins accoring to a specific map that is randomly generated everday.
